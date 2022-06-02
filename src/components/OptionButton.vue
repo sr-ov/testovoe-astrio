@@ -8,7 +8,7 @@ defineProps<Props>()
 
 <template>
 	<button
-		class="option w-6 h-4 rounded text-[10px]"
+		class="option w-7 h-5 rounded text-[10px]"
 		:class="{ 'ring-2': active }"
 		:disabled="disabled"
 	>

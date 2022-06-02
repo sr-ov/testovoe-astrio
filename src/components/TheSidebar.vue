@@ -18,7 +18,9 @@ onMounted(() => {
 		class="sidebar fixed left-0 z-10 min-w-[250px] border-r-2 transition bg-white px-2 lg:static"
 		:class="{ active: isActiveSidebar }"
 	>
-		<div class="sticky z-10 top-[var(--header-height)] left-0">
+		<div
+			class="sticky h-full lg:h-auto z-10 top-[var(--header-height)] left-0"
+		>
 			<div class="overflow-auto wrapper grid" ref="elRef">
 				<ul class="space-y-1">
 					<li>
@@ -60,6 +62,7 @@ onMounted(() => {
 <style scoped>
 .sidebar {
 	transform: translateX(-100%);
+	height: 100%;
 }
 .sidebar.active {
 	transform: translateX(0);
