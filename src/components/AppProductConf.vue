@@ -108,6 +108,17 @@ const curProduct = computed(() => {
 			color: selectedOptions.color.label,
 		}
 	}
+	if (selectedOptions.size.value !== INACTIVE_VALUE) {
+		const { product } = attrs.filter(
+			({ size }) => size === selectedOptions.size.value
+		)[0]
+
+		return {
+			...product,
+			image: replaceImage(product.image),
+			size: selectedOptions.size.label,
+		}
+	}
 
 	return props.product
 })
