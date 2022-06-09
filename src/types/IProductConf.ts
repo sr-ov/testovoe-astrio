@@ -2,7 +2,7 @@ import type { IProduct } from './IProduct'
 
 export type Code = 'color' | 'size'
 type ColorLabel = 'Red' | 'Blue' | 'Black'
-type ColorValue = '#ff0000' | '#0000ff' | '#000'
+export type ColorValue = '#ff0000' | '#0000ff' | '#000'
 type SizeLabel = 'M' | 'L'
 type SizeValue = 1 | 2
 

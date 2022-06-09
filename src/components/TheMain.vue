@@ -4,7 +4,7 @@ import { AppProduct } from '@/components'
 import { AppProductConf } from '@/components'
 import type { IProductConf } from '@/types/IProductConf'
 
-const { getters } = useStore()
+const { getters, actions } = useStore()
 </script>
 
 <template>
@@ -16,6 +16,7 @@ const { getters } = useStore()
 				<app-product
 					v-if="product.type === 'simple'"
 					:product="product"
+					@add-to-cart="actions.addToCart(product)"
 				></app-product>
 
 				<app-product-conf

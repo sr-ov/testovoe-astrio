@@ -47,7 +47,7 @@ export const useStore = defineStore('store', () => {
 		state.brands = await getBrands()
 	}
 
-	const addToCart = (product: IProduct) => {
+	const addToCart = (product: IProduct | IProductConf) => {
 		const isFound = state.cartProducts.has(product)
 
 		if (isFound) {

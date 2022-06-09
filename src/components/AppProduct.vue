@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useStore } from '@/stores'
 import type { IProduct } from '@/types/IProduct'
 import { URL } from '@/constants'
 
@@ -8,8 +7,7 @@ interface Props {
 }
 
 defineProps<Props>()
-
-const { actions } = useStore()
+const emit = defineEmits(['addToCart'])
 </script>
 
 <template>
@@ -30,7 +28,7 @@ const { actions } = useStore()
 
 				<button
 					class="w-10 h-10 flex justify-center items-center bg-slate-100 hover:bg-slate-200 transition rounded"
-					@click.prevent="actions.addToCart(product)"
+					@click.prevent="emit('addToCart')"
 				>
 					<img
 						src="@/assets/images/svg/add-to-cart.svg"

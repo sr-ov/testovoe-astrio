@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
-import prop from 'lodash.property'
 import { AppProduct, OptionButton } from '@/components'
 import { INACTIVE_VALUE } from '@/constants'
 import type {
@@ -9,9 +8,10 @@ import type {
 	IProductConf,
 	Code,
 } from '@/types/IProductConf'
+import { useStore } from '@/stores'
+import { replaceImage, generateProductKey } from '@/utils'
 
-type NormVariants = Record<string, number[]>
-type Attrs = { color: number; size: number }
+type VarsOptions = Record<string, number[]>
 
 interface Props {
 	product: IProductConf
@@ -19,34 +19,42 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const colors = props.product.configurable_options.filter(
-	(el) => el.attribute_code === 'color'
-)[0].values as IConfigurableOptionColor[]
+const products = new Map<string, IProductConf>()
 
-const sizes = props.product.configurable_options.filter(
-	(el) => el.attribute_code === 'size'
-)[0].values as IConfigurableOptionSize[]
+const [colors, sizes] = props.product.configurable_options.map(({ values }) =>
+	values.reduce(
+		(acc, el) => ((acc[el.value_index] = el), acc),
+		{} as Record<string, IConfigurableOptionColor | IConfigurableOptionSize>
+	)
+)
 
-const attrs = props.product.variants.map(({ product, attributes }) => ({
-	...attributes.reduce<Attrs>(
-		(acc, el) => ((acc[el.code] = el.value_index), acc),
-		{} as Attrs
-	),
-	product,
-}))
+const variantsColors: VarsOptions = {}
+const variantsSizes: VarsOptions = {}
 
-const variantsSizes = colors.reduce<NormVariants>((acc, color) => {
-	acc[color.value_index] = attrs
-		.filter((el) => el.color === color.value_index)
-		.map(prop('size'))
-	return acc
-}, {})
-const variantsColors = sizes.reduce<NormVariants>((acc, size) => {
-	acc[size.value_index] = attrs
-		.filter((el) => el.size === size.value_index)
-		.map(prop('color'))
-	return acc
-}, {})
+const setVariants = (vars: VarsOptions, keyId: number, valueId: number) => {
+	vars[keyId] =
+		vars[keyId]?.length > 0 ? vars[keyId].concat(valueId) : [valueId]
+}
+
+for (const { product, attributes } of props.product.variants) {
+	const [color, size] = attributes
+	const colorId = color.value_index
+	const sizeId = size.value_index
+	setVariants(variantsSizes, colorId, sizeId)
+	setVariants(variantsColors, sizeId, colorId)
+
+	for (const key of [
+		[colorId, INACTIVE_VALUE],
+		[INACTIVE_VALUE, sizeId],
+		[colorId, sizeId],
+	]) {
+		products.set(generateProductKey(key), {
+			...props.product,
+			...product,
+			image: replaceImage(product.image),
+		})
+	}
+}
 
 const selectedOptions = reactive({
 	color: { value: INACTIVE_VALUE, label: '' },
@@ -76,61 +84,29 @@ const selectOption = (option: Code, nextValue: number, label: string) => {
 	}
 }
 
-const replaceImage = (imageUrl: string) => imageUrl.replace('image', 'images')
+const currentProduct = computed(
+	() =>
+		products.get(
+			generateProductKey([
+				selectedOptions.color.value,
+				selectedOptions.size.value,
+			])
+		) || props.product
+)
 
-const curProduct = computed(() => {
-	if (
-		selectedOptions.color.value !== INACTIVE_VALUE &&
-		selectedOptions.size.value !== INACTIVE_VALUE
-	) {
-		const { product } = attrs.filter(
-			({ color, size }) =>
-				color === selectedOptions.color.value &&
-				size === selectedOptions.size.value
-		)[0]
+const { actions } = useStore()
 
-		return {
-			...product,
-			image: replaceImage(product.image),
-			color: selectedOptions.color.label,
-			size: selectedOptions.size.label,
-		}
-	}
-
-	if (selectedOptions.color.value !== INACTIVE_VALUE) {
-		const { product } = attrs.filter(
-			({ color }) => color === selectedOptions.color.value
-		)[0]
-
-		return {
-			...product,
-			image: replaceImage(product.image),
-			color: selectedOptions.color.label,
-		}
-	}
-	if (selectedOptions.size.value !== INACTIVE_VALUE) {
-		const { product } = attrs.filter(
-			({ size }) => size === selectedOptions.size.value
-		)[0]
-
-		return {
-			...product,
-			image: replaceImage(product.image),
-			size: selectedOptions.size.label,
-		}
-	}
-
-	return props.product
-})
+const addToCart = () => {
+	actions.addToCart({
+		...currentProduct.value,
+		color: colors[selectedOptions.color.value]?.label,
+		size: sizes[selectedOptions.size.value]?.label,
+	})
+}
 </script>
 
 <template>
-	<app-product
-		:product="{
-			...product,
-			...curProduct,
-		}"
-	>
+	<app-product :product="currentProduct" @add-to-cart="addToCart">
 		<div class="space-y-3">
 			<div class="flex gap-3">
 				<option-button
